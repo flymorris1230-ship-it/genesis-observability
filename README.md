@@ -7,7 +7,9 @@
 [![Test Coverage](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg)](./apps/obs-edge/TEST_REPORT.md)
 [![Phase](https://img.shields.io/badge/Phase-3%20Complete-success.svg)](./PHASE_3_QUALITY_REPORT.md)
 [![Quality Score](https://img.shields.io/badge/Quality-95%2F100-brightgreen.svg)](./PHASE_3_QUALITY_REPORT.md)
-[![Deployment](https://img.shields.io/badge/Deployment-85%25%20Ready-yellow.svg)](./PHASE_3_DEPLOYMENT_SUMMARY.md)
+[![Deployment](https://img.shields.io/badge/Deployment-Production%20Ready-brightgreen.svg)](./DEPLOYMENT.md)
+[![Dashboard](https://img.shields.io/badge/Dashboard-Live-success.svg)](./index.html)
+[![API Status](https://img.shields.io/badge/API-11%20Endpoints-blue.svg)](https://obs-edge.flymorris1230.workers.dev/health)
 
 ---
 
@@ -20,6 +22,38 @@
 - **📦 Phase-based 交付** - 品質閘門（>= 85/100）確保零技術債
 - **🔒 Zero-Conflict 架構** - 與 Factory OS 完全隔離，可獨立商用化
 - **⚡ 邊緣+主權混合方案** - Cloudflare Edge + NAS + Supabase，兼顧性能、成本與資料控制
+
+---
+
+## 🚀 Quick Start
+
+### Live Dashboard
+📊 **[Open Dashboard](./index.html)** - Real-time Project Tracking
+
+### API Endpoints
+- **Health Check**: https://obs-edge.flymorris1230.workers.dev/health
+- **Project Overview**: https://obs-edge.flymorris1230.workers.dev/progress/overview?project_id=GAC_FactoryOS
+- **All Endpoints**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Current Status
+- **Overall Progress**: 33% (22/65 features completed)
+- **Active Sprint**: Sprint 1 Day 4 (8/15 tasks completed)
+- **AI Agents**: 7 active agents, 75% success rate
+- **System Health**: 100% operational (11 API endpoints)
+
+### Key Features
+✅ Real-time module progress visualization
+✅ Sprint tracking with daily velocity
+✅ Task distribution charts
+✅ AI agent performance monitoring
+✅ System health dashboard
+✅ Auto-refresh every 30 seconds
+
+### Quick Links
+- 📚 [Deployment Guide](./DEPLOYMENT.md)
+- 🧪 [Quality Report](./QUALITY_VERIFICATION_REPORT_FINAL.md)
+- 🔧 [API Test Scripts](./scripts/)
+- 📊 [Complete Data Snapshot](./complete-data-snapshot.json)
 
 ---
 
