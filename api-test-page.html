@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genesis Observability API Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-pending { color: #6b7280; }
+        .status-loading { color: #3b82f6; animation: pulse 1s infinite; }
+        .status-success { color: #10b981; }
+        .status-error { color: #ef4444; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .json-viewer {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 mb-6 text-white">
+            <h1 class="text-3xl font-bold mb-2">🚀 Genesis Observability API Tester</h1>
+            <p class="text-blue-100">Interactive testing interface for all 11 API endpoints</p>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">⚙️ Configuration</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Base URL</label>
+                    <input type="text" id="apiBaseUrl" value="https://obs-edge.flymorris1230.workers.dev"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                           readonly>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Project ID</label>
+                    <input type="text" id="projectId" value="GAC_FactoryOS"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                           readonly>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="apiKey" placeholder="Enter your API key"
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button onclick="saveApiKey()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                            💾 Save
+                        </button>
+                        <button onclick="toggleApiKeyVisibility()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
+                            👁️ Show
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button onclick="testAllEndpoints()"
+                        class="w-full md:w-auto px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-semibold">
+                    🚀 Test All Endpoints
+                </button>
+                <button onclick="clearAllResults()"
+                        class="w-full md:w-auto mt-2 md:mt-0 md:ml-2 px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition font-semibold">
+                    🗑️ Clear Results
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Endpoints Panel -->
+            <div class="space-y-6">
+                <!-- Health Check -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">🏥 Health Check</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-health">●</span>
+                                <span class="text-sm font-medium text-gray-700">Health Check</span>
+                                <span class="text-xs text-gray-500" id="time-health"></span>
+                            </div>
+                            <button onclick="testEndpoint('health')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress API -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">📊 Progress API (4 endpoints)</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-modules">●</span>
+                                <span class="text-sm font-medium text-gray-700">Module Progress</span>
+                                <span class="text-xs text-gray-500" id="time-modules"></span>
+                            </div>
+                            <button onclick="testEndpoint('modules')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-sprint">●</span>
+                                <span class="text-sm font-medium text-gray-700">Sprint Progress</span>
+                                <span class="text-xs text-gray-500" id="time-sprint"></span>
+                            </div>
+                            <button onclick="testEndpoint('sprint')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-tasks">●</span>
+                                <span class="text-sm font-medium text-gray-700">Task Progress</span>
+                                <span class="text-xs text-gray-500" id="time-tasks"></span>
+                            </div>
+                            <button onclick="testEndpoint('tasks')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-overview">●</span>
+                                <span class="text-sm font-medium text-gray-700">Project Overview</span>
+                                <span class="text-xs text-gray-500" id="time-overview"></span>
+                            </div>
+                            <button onclick="testEndpoint('overview')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Monitoring API -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">🏥 Health Monitoring API (4 endpoints)</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-system-health">●</span>
+                                <span class="text-sm font-medium text-gray-700">System Health</span>
+                                <span class="text-xs text-gray-500" id="time-system-health"></span>
+                            </div>
+                            <button onclick="testEndpoint('system-health')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-api-health">●</span>
+                                <span class="text-sm font-medium text-gray-700">API Health</span>
+                                <span class="text-xs text-gray-500" id="time-api-health"></span>
+                            </div>
+                            <button onclick="testEndpoint('api-health')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-db-health">●</span>
+                                <span class="text-sm font-medium text-gray-700">Database Health</span>
+                                <span class="text-xs text-gray-500" id="time-db-health"></span>
+                            </div>
+                            <button onclick="testEndpoint('db-health')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-integrations">●</span>
+                                <span class="text-sm font-medium text-gray-700">Integration Health</span>
+                                <span class="text-xs text-gray-500" id="time-integrations"></span>
+                            </div>
+                            <button onclick="testEndpoint('integrations')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Monitoring API -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800">🤖 Agent Monitoring API (3 endpoints)</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-executions">●</span>
+                                <span class="text-sm font-medium text-gray-700">Agent Executions</span>
+                                <span class="text-xs text-gray-500" id="time-executions"></span>
+                            </div>
+                            <button onclick="testEndpoint('executions')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-performance">●</span>
+                                <span class="text-sm font-medium text-gray-700">Agent Performance</span>
+                                <span class="text-xs text-gray-500" id="time-performance"></span>
+                            </div>
+                            <button onclick="testEndpoint('performance')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
+                            <div class="flex items-center gap-3 flex-1">
+                                <span class="status-pending" id="status-summary">●</span>
+                                <span class="text-sm font-medium text-gray-700">Agent Summary</span>
+                                <span class="text-xs text-gray-500" id="time-summary"></span>
+                            </div>
+                            <button onclick="testEndpoint('summary')"
+                                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition">
+                                Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Viewer -->
+            <div class="lg:sticky lg:top-4 lg:self-start">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">📄 Response Viewer</h3>
+                        <button onclick="copyResponse()"
+                                class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition">
+                            📋 Copy
+                        </button>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-600">Endpoint: </span>
+                        <span class="text-sm font-medium text-blue-600" id="current-endpoint">None</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-600">Status: </span>
+                        <span class="text-sm font-medium" id="current-status">-</span>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-sm text-gray-600">Response Time: </span>
+                        <span class="text-sm font-medium" id="current-time">-</span>
+                    </div>
+                    <pre id="response-viewer"
+                         class="json-viewer bg-gray-900 text-green-400 p-4 rounded-md overflow-auto max-h-[600px] text-xs">
+// No response yet. Click "Test" on any endpoint to see results.
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-gray-500 text-sm">
+            <p>Genesis Observability API Tester v1.0.0 | Made with ❤️ for GAC Factory OS</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_CONFIG = {
+            health: {
+                path: '/health',
+                requiresAuth: false,
+            },
+            modules: {
+                path: '/progress/modules',
+                requiresAuth: true,
+            },
+            sprint: {
+                path: '/progress/sprint',
+                requiresAuth: true,
+            },
+            tasks: {
+                path: '/progress/tasks',
+                requiresAuth: true,
+            },
+            overview: {
+                path: '/progress/overview',
+                requiresAuth: true,
+            },
+            'system-health': {
+                path: '/health/system',
+                requiresAuth: true,
+            },
+            'api-health': {
+                path: '/health/api',
+                requiresAuth: true,
+            },
+            'db-health': {
+                path: '/health/database',
+                requiresAuth: true,
+            },
+            integrations: {
+                path: '/health/integrations',
+                requiresAuth: true,
+            },
+            executions: {
+                path: '/agents/executions',
+                requiresAuth: true,
+            },
+            performance: {
+                path: '/agents/performance?period=day',
+                requiresAuth: true,
+            },
+            summary: {
+                path: '/agents/summary',
+                requiresAuth: true,
+            },
+        };
+
+        // Initialize
+        window.onload = function() {
+            const savedApiKey = localStorage.getItem('genesis-api-key');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+        };
+
+        // API Key Management
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (apiKey) {
+                localStorage.setItem('genesis-api-key', apiKey);
+                alert('✅ API Key saved successfully!');
+            } else {
+                alert('❌ Please enter an API key');
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('apiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // Test Single Endpoint
+        async function testEndpoint(endpoint) {
+            const config = API_CONFIG[endpoint];
+            const baseUrl = document.getElementById('apiBaseUrl').value;
+            const projectId = document.getElementById('projectId').value;
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (config.requiresAuth && !apiKey) {
+                alert('❌ Please enter and save your API key first');
+                return;
+            }
+
+            // Update status to loading
+            const statusEl = document.getElementById(`status-${endpoint}`);
+            statusEl.className = 'status-loading';
+
+            // Build URL
+            let url = baseUrl + config.path;
+            if (config.requiresAuth && !url.includes('?')) {
+                url += `?project_id=${projectId}`;
+            } else if (config.requiresAuth) {
+                url += `&project_id=${projectId}`;
+            }
+
+            // Prepare headers
+            const headers = {};
+            if (config.requiresAuth) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+
+            // Make request
+            const startTime = performance.now();
+            try {
+                const response = await fetch(url, { headers });
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                const data = await response.json();
+
+                // Update status
+                if (response.ok) {
+                    statusEl.className = 'status-success';
+                    document.getElementById(`time-${endpoint}`).textContent = `⏱️ ${duration}ms`;
+                } else {
+                    statusEl.className = 'status-error';
+                    document.getElementById(`time-${endpoint}`).textContent = `❌ ${response.status}`;
+                }
+
+                // Update response viewer
+                updateResponseViewer(endpoint, response.status, duration, data);
+
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                statusEl.className = 'status-error';
+                document.getElementById(`time-${endpoint}`).textContent = '❌ Error';
+
+                updateResponseViewer(endpoint, 'Error', duration, {
+                    error: error.message,
+                    details: 'Network error or CORS issue'
+                });
+            }
+        }
+
+        // Update Response Viewer
+        function updateResponseViewer(endpoint, status, time, data) {
+            document.getElementById('current-endpoint').textContent = endpoint;
+            document.getElementById('current-status').textContent = status;
+            document.getElementById('current-status').className = status >= 200 && status < 300
+                ? 'text-sm font-medium text-green-600'
+                : 'text-sm font-medium text-red-600';
+            document.getElementById('current-time').textContent = `${time}ms`;
+            document.getElementById('response-viewer').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Copy Response
+        function copyResponse() {
+            const responseText = document.getElementById('response-viewer').textContent;
+            navigator.clipboard.writeText(responseText).then(() => {
+                alert('✅ Response copied to clipboard!');
+            });
+        }
+
+        // Test All Endpoints
+        async function testAllEndpoints() {
+            const endpoints = Object.keys(API_CONFIG);
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint);
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay between requests
+            }
+            alert('✅ All endpoints tested!');
+        }
+
+        // Clear All Results
+        function clearAllResults() {
+            const endpoints = Object.keys(API_CONFIG);
+            endpoints.forEach(endpoint => {
+                const statusEl = document.getElementById(`status-${endpoint}`);
+                if (statusEl) {
+                    statusEl.className = 'status-pending';
+                }
+                const timeEl = document.getElementById(`time-${endpoint}`);
+                if (timeEl) {
+                    timeEl.textContent = '';
+                }
+            });
+            document.getElementById('current-endpoint').textContent = 'None';
+            document.getElementById('current-status').textContent = '-';
+            document.getElementById('current-time').textContent = '-';
+            document.getElementById('response-viewer').textContent = '// No response yet. Click "Test" on any endpoint to see results.';
+        }
+    </script>
+</body>
+</html>

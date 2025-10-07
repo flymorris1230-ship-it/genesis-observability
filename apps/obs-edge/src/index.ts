@@ -42,12 +42,8 @@ const app = new Hono<{ Bindings: Env }>();
 // Global middleware
 app.use('*', logger());
 app.use('*', cors({
-  origin: [
-    'http://localhost:3000',
-    'https://observability.genesis.com',
-    'https://genesis-observability-obs-dashboard.vercel.app',
-  ],
-  credentials: true,
+  origin: '*', // Allow all origins including local file:// protocol
+  credentials: false,
   allowMethods: ['GET', 'POST', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length'],
