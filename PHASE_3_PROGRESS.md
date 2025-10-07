@@ -202,26 +202,39 @@ apps/
 ## 📝 當前進度
 
 **Phase 3.1**: 100% ✅ (obs-edge Worker 完成)
-**Phase 3.2**: 0% (Dashboard MVP 待實作)
+**Phase 3.2**: 100% ✅ (Dashboard MVP 完成)
 **Phase 3.3**: 0% (CI/CD 待實作)
 **Phase 3.4**: 100% ✅ (Worker 測試完成)
 
-**總進度**: 50/100 (Worker + Tests 完成)
+**總進度**: 80/100 (Worker + Dashboard + Tests 完成)
 
 ---
 
 ## 🎯 已完成項目
 
-1. ✅ 建立 Phase 3 進度文件
-2. ✅ 初始化 obs-edge Worker 專案
-3. ✅ 實作 /ingest 端點
-4. ✅ 實作 /metrics 端點
-5. ✅ 實作 /costs 端點
-6. ✅ 實作 Authentication Middleware
-7. ✅ 實作 Rate Limiting Middleware
-8. ✅ Supabase 整合
-9. ✅ 建立完整測試套件 (70 tests, 100% passing)
-10. ✅ 測試覆蓋率 > 80%
+### Phase 3.1: obs-edge Worker ✅
+1. ✅ 建立 Cloudflare Worker 專案
+2. ✅ 實作 /ingest 端點
+3. ✅ 實作 /metrics 端點
+4. ✅ 實作 /costs 端點
+5. ✅ Authentication Middleware (Bearer token)
+6. ✅ Rate Limiting Middleware (100 req/min)
+7. ✅ Supabase 整合
+
+### Phase 3.2: obs-dashboard MVP ✅
+8. ✅ Next.js 15 專案初始化
+9. ✅ Tailwind CSS + shadcn/ui 設置
+10. ✅ API Client (obs-edge 整合)
+11. ✅ FilterPanel 元件 (日期、專案篩選)
+12. ✅ MetricsChart 元件 (Recharts 圖表)
+13. ✅ CostTrend 元件 (成本分析)
+14. ✅ Dashboard 主頁整合
+15. ✅ React Query 資料流
+16. ✅ README 與文件
+
+### Phase 3.4: 測試套件 ✅
+17. ✅ 建立完整測試套件 (70 tests, 100% passing)
+18. ✅ 測試覆蓋率 > 80% (~95%)
 
 ## 🧪 測試結果摘要
 
@@ -241,17 +254,44 @@ apps/
 
 詳細報告: [TEST_REPORT.md](apps/obs-edge/TEST_REPORT.md)
 
+## 📊 Dashboard MVP 功能
+
+**技術棧**:
+- Next.js 15 (App Router)
+- React 19
+- TypeScript 5.7
+- Tailwind CSS 3.4
+- TanStack Query v5
+- Recharts v2
+- date-fns v4
+
+**核心功能**:
+1. ✅ 即時 LLM 使用監控
+2. ✅ 互動式圖表 (tokens, latency, costs)
+3. ✅ 成本追蹤與分析
+4. ✅ 靈活的日期範圍篩選
+5. ✅ 供應商成本分析
+6. ✅ 響應式設計
+
+**元件清單**:
+- FilterPanel: 專案與日期範圍過濾
+- MetricsChart: Token 使用量與延遲視覺化
+- CostTrend: 每日成本趨勢與供應商分析
+- API Client: obs-edge 整合
+
+詳細文檔: [obs-dashboard/README.md](apps/obs-dashboard/README.md)
+
 ---
 
 ## 🎯 下一步行動
 
 1. ✅ obs-edge Worker 實作與測試
-2. ⏳ 建立 obs-dashboard MVP
-3. ⏳ 設置 CI/CD Pipeline
+2. ✅ 建立 obs-dashboard MVP
+3. ⏳ 設置 CI/CD Pipeline (GitHub Actions)
 4. ⏳ 生成 Phase 3 品質報告
-5. ⏳ 部署與驗證
+5. ⏳ 部署與驗證 (Cloudflare + Vercel)
 
 ---
 
-**更新時間**: 2025-10-07 13:20
+**更新時間**: 2025-10-07 13:30
 **負責人**: Claude Code Agent
