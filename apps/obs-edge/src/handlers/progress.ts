@@ -94,7 +94,7 @@ export async function sprintProgressHandler(c: Context<{ Bindings: Env }>) {
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query.order('sprint_number', { ascending: false });
+    const { data, error} = await query.order('started_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch sprint progress: ${error.message}`);
@@ -118,14 +118,15 @@ export async function sprintProgressHandler(c: Context<{ Bindings: Env }>) {
       },
       sprints: data.map(sprint => ({
         id: sprint.id,
-        sprint_number: sprint.sprint_number,
+        sprint_day: sprint.sprint_day,
         sprint_name: sprint.sprint_name,
         status: sprint.status,
-        start_date: sprint.start_date,
-        end_date: sprint.end_date,
-        planned_points: sprint.planned_points,
-        completed_points: sprint.completed_points,
+        started_at: sprint.started_at,
+        ended_at: sprint.ended_at,
+        completed_tasks: sprint.completed_tasks,
+        total_tasks: sprint.total_tasks,
         velocity: sprint.velocity,
+        goals: sprint.goals,
         metadata: sprint.metadata,
       })),
     });
@@ -244,7 +245,7 @@ export async function overviewProgressHandler(c: Context<{ Bindings: Env }>) {
         .from('sprint_progress')
         .select('*')
         .eq('project_id', projectId)
-        .order('sprint_number', { ascending: false })
+        .order('started_at', { ascending: false })
         .limit(1),
       supabase
         .from('task_progress')
@@ -278,12 +279,14 @@ export async function overviewProgressHandler(c: Context<{ Bindings: Env }>) {
           in_progress: modules.filter(m => m.status === 'in_progress').length,
         },
         current_sprint: currentSprint ? {
-          number: currentSprint.sprint_number,
+          day: currentSprint.sprint_day,
           name: currentSprint.sprint_name,
           status: currentSprint.status,
-          progress: currentSprint.completed_points && currentSprint.planned_points
-            ? Math.round((currentSprint.completed_points / currentSprint.planned_points) * 100)
+          progress: currentSprint.total_tasks > 0
+            ? Math.round((currentSprint.completed_tasks / currentSprint.total_tasks) * 100)
             : 0,
+          completed_tasks: currentSprint.completed_tasks,
+          total_tasks: currentSprint.total_tasks,
         } : null,
         tasks: {
           total: tasks.length,
