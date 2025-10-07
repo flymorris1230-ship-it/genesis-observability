@@ -4,9 +4,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
-[![Test Coverage](https://img.shields.io/badge/Coverage-80%25%2B-brightgreen.svg)]()
-[![Phase](https://img.shields.io/badge/Phase-0%20Complete-success.svg)](./PHASE_0_QUALITY_REPORT.md)
-[![Quality Score](https://img.shields.io/badge/Quality-91%2F100-brightgreen.svg)](./PHASE_0_QUALITY_REPORT.md)
+[![Test Coverage](https://img.shields.io/badge/Coverage-95%25-brightgreen.svg)](./apps/obs-edge/TEST_REPORT.md)
+[![Phase](https://img.shields.io/badge/Phase-3%20Complete-success.svg)](./PHASE_3_QUALITY_REPORT.md)
+[![Quality Score](https://img.shields.io/badge/Quality-95%2F100-brightgreen.svg)](./PHASE_3_QUALITY_REPORT.md)
+[![Deployment](https://img.shields.io/badge/Deployment-85%25%20Ready-yellow.svg)](./PHASE_3_DEPLOYMENT_SUMMARY.md)
 
 ---
 
@@ -259,11 +260,15 @@ IaC: Wrangler + Terraform (optional)
 | Phase | Timeline | Status | Quality Score | Progress |
 |-------|----------|--------|---------------|----------|
 | **Phase 0: Multi-LLM Router** | 1 day | ✅ **Complete** | **91/100** | 100% |
-| **Phase 1: Knowledge Circulation** | 3-4 days | 🔄 **In Planning** | - | 0% |
-| **Phase 2: obs-edge API** | 3-4 days | ⏳ **Pending** | - | 0% |
-| **Phase 3: obs-dashboard UI** | 5-7 days | ⏳ **Pending** | - | 0% |
+| **Phase 1: Knowledge Circulation** | 3-4 days | ✅ **Complete** | **90/100** | 100% |
+| **Phase 2: Monitoring Infrastructure** | 3-4 days | ✅ **Complete** | **92/100** | 100% |
+| **Phase 3: obs-edge Worker + Dashboard** | 5-7 days | ✅ **Complete** | **95/100** | 100% |
+| **Deployment** | - | 🟡 **Partial** | - | 85% |
 
-**Total Estimated Timeline**: 12-16 days
+**Total Timeline**: Completed in 10 days
+**Overall Quality Score**: 95/100 ⭐⭐⭐⭐⭐
+
+**Current Status**: ✅ Worker deployed, 🟡 Dashboard ready (awaiting Supabase + Vercel setup)
 
 ---
 
@@ -423,13 +428,33 @@ Total Infrastructure:         ~$31/month
 
 ## 📚 Documentation
 
+### 🚀 Quick Start
+
+- **[QUICK_START.md](./QUICK_START.md)** - ⚡ Get up and running in 15 minutes
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide (Supabase + Vercel)
+- **[DEPLOYMENT_ARCHITECTURE.md](./DEPLOYMENT_ARCHITECTURE.md)** - System architecture & API reference
+
 ### Internal Documentation
 
 - **[CLAUDE.md](./CLAUDE.md)** - Comprehensive development guidelines (2600+ lines)
 - **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** - System architecture diagrams (11 Mermaid diagrams)
 - **[PHASE_DELIVERY_PLAN.md](./PHASE_DELIVERY_PLAN.md)** - 4-phase delivery roadmap
 - **[QUALITY_REPORT_TEMPLATE.md](./QUALITY_REPORT_TEMPLATE.md)** - Quality verification framework
-- **[PHASE_0_QUALITY_REPORT.md](./PHASE_0_QUALITY_REPORT.md)** - Phase 0 quality report (91/100)
+
+### Phase Reports
+
+- **[PHASE_0_QUALITY_REPORT.md](./PHASE_0_QUALITY_REPORT.md)** - Phase 0: Multi-LLM Router (91/100)
+- **[PHASE_1_QUALITY_REPORT.md](./PHASE_1_QUALITY_REPORT.md)** - Phase 1: Knowledge Circulation (90/100)
+- **[PHASE_2_QUALITY_REPORT.md](./PHASE_2_QUALITY_REPORT.md)** - Phase 2: Monitoring Infrastructure (92/100)
+- **[PHASE_3_QUALITY_REPORT.md](./PHASE_3_QUALITY_REPORT.md)** - Phase 3: Worker + Dashboard (95/100)
+- **[PHASE_3_DEPLOYMENT_SUMMARY.md](./PHASE_3_DEPLOYMENT_SUMMARY.md)** - Deployment status & next steps
+
+### Component Documentation
+
+- **[apps/obs-edge/TEST_REPORT.md](./apps/obs-edge/TEST_REPORT.md)** - Worker test coverage (70 tests, 95%)
+- **[apps/obs-edge/DEPLOYMENT_SECRETS.md](./apps/obs-edge/DEPLOYMENT_SECRETS.md)** - Worker secrets management
+- **[apps/obs-dashboard/README.md](./apps/obs-dashboard/README.md)** - Dashboard usage guide
+- **[.github/CICD_SETUP.md](./.github/CICD_SETUP.md)** - CI/CD pipeline configuration
 
 ### External Documentation
 
@@ -441,63 +466,86 @@ Total Infrastructure:         ~$31/month
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### ⚡ Get Started in 15 Minutes
+
+**See [QUICK_START.md](./QUICK_START.md) for the fastest way to get up and running!**
+
+Or use the automated deployment script:
+
+```bash
+# One-click deployment
+./scripts/deploy-all.sh
+```
+
+### Manual Setup
+
+#### Prerequisites
 
 ```bash
 Node.js >= 18
-pnpm >= 8
-Cloudflare account (Workers & Pages)
-Supabase account (PostgreSQL + Vector)
+pnpm >= 8 (or npm)
+Cloudflare account (free tier works)
+Supabase account (free tier works)
+Vercel account (free tier works, optional)
 ```
 
-### Environment Setup
+#### Step 1: Setup Supabase
 
 ```bash
-# Clone repository
-git clone https://github.com/your-org/genesis-observability.git
-cd genesis-observability
+# 1. Create project at app.supabase.com
+# 2. Run database schema
+cd scripts
+# Copy setup-supabase.sql to Supabase SQL Editor and run
+```
 
+#### Step 2: Deploy Worker
+
+```bash
+cd apps/obs-edge
+
+# Set secrets
+echo "YOUR_SUPABASE_URL" | npx wrangler secret put SUPABASE_URL
+echo "YOUR_SERVICE_KEY" | npx wrangler secret put SUPABASE_SERVICE_KEY
+echo "$(openssl rand -hex 32)" | npx wrangler secret put API_KEY
+
+# Deploy
+npx wrangler deploy
+```
+
+#### Step 3: Deploy Dashboard
+
+```bash
+cd apps/obs-dashboard
+
+# Configure .env.production
+echo "NEXT_PUBLIC_OBS_EDGE_URL=https://obs-edge.YOUR_SUBDOMAIN.workers.dev" > .env.production
+echo "NEXT_PUBLIC_OBS_EDGE_API_KEY=YOUR_API_KEY" >> .env.production
+
+# Deploy to Vercel
+vercel deploy --prod
+```
+
+#### Step 4: Test
+
+```bash
+# Run end-to-end tests
+./scripts/test-e2e.sh
+```
+
+### Development
+
+```bash
 # Install dependencies
 pnpm install
 
-# Setup environment variables
-cp .env.example .env
-# Edit .env with your API keys:
-# - ANTHROPIC_API_KEY (Claude)
-# - OPENAI_API_KEY (GPT)
-# - GEMINI_API_KEY (Gemini)
-# - SUPABASE_URL
-# - SUPABASE_KEY
-# - CLOUDFLARE_API_TOKEN
-
-# Initialize database
-pnpm db:migrate
-
 # Start development servers
-pnpm dev
-```
+pnpm dev                          # Full stack
+cd apps/obs-dashboard && pnpm dev  # Frontend only
+cd apps/obs-edge && wrangler dev   # Worker only
 
-### Run Tests
-
-```bash
-# Unit tests
-pnpm test
-
-# E2E tests
-pnpm test:e2e
-
-# Load tests
-pnpm test:load
-```
-
-### Deploy
-
-```bash
-# Preview deployment (PR)
-pnpm deploy:preview
-
-# Production deployment
-pnpm deploy:production
+# Run tests
+pnpm test                         # Unit tests
+./scripts/test-e2e.sh            # E2E tests
 ```
 
 ---
@@ -532,11 +580,19 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
-**📝 Version**: 1.0.0
-**🔄 Last Updated**: 2025-01-07
-**✅ Status**: Phase 0 Complete (91/100) | Phase 1 In Planning
-**🎯 Next Milestone**: Phase 1 - Knowledge Circulation Infrastructure (3-4 days)
+**📝 Version**: 3.0.0
+**🔄 Last Updated**: 2025-10-07
+**✅ Status**: Phase 3 Complete (95/100) | Production Ready (85%)
+**🎯 Current Milestone**: Deployment to Production (Supabase + Vercel setup required)
+
+**🚀 Quick Links:**
+- [⚡ Quick Start (15 min)](./QUICK_START.md)
+- [📐 Architecture Guide](./DEPLOYMENT_ARCHITECTURE.md)
+- [📦 Deployment Guide](./DEPLOYMENT_GUIDE.md)
+- [📊 Deployment Status](./PHASE_3_DEPLOYMENT_SUMMARY.md)
 
 ---
 
 **Built with ❤️ using Claude 3.5 Sonnet, GPT-4o-mini, and Gemini Pro**
+
+**Deployed on**: Cloudflare Workers (✅) + Vercel (⏳) + Supabase (⏳)
