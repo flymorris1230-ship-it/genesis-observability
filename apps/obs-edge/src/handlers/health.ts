@@ -23,19 +23,19 @@ export async function systemHealthHandler(c: Context<{ Bindings: Env }>) {
         .from('api_health')
         .select('*')
         .eq('project_id', projectId)
-        .order('checked_at', { ascending: false })
+        .order('last_check', { ascending: false })
         .limit(100),
       supabase
         .from('database_health')
         .select('*')
         .eq('project_id', projectId)
-        .order('checked_at', { ascending: false })
+        .order('last_check', { ascending: false })
         .limit(10),
       supabase
         .from('integration_health')
         .select('*')
         .eq('project_id', projectId)
-        .order('last_check_at', { ascending: false }),
+        .order('created_at', { ascending: false }),
     ]);
 
     if (apiResult.error) throw new Error(apiResult.error.message);
@@ -47,7 +47,7 @@ export async function systemHealthHandler(c: Context<{ Bindings: Env }>) {
     const integrations = integrationResult.data;
 
     // Calculate API health summary
-    const healthyApis = apis.filter(a => a.is_healthy).length;
+    const healthyApis = apis.filter(a => a.status === 'healthy').length;
     const totalApis = apis.length;
     const avgResponseTime = apis.length > 0
       ? apis.reduce((sum, a) => sum + (a.response_time_ms || 0), 0) / apis.length
@@ -57,14 +57,14 @@ export async function systemHealthHandler(c: Context<{ Bindings: Env }>) {
       : 0;
 
     // Calculate database health summary
-    const healthyDbs = databases.filter(d => d.is_healthy).length;
+    const healthyDbs = databases.filter(d => d.status === 'connected').length;
     const totalDbs = databases.length;
 
     // Calculate integration health summary
-    const healthyIntegrations = integrations.filter(i => i.status === 'healthy').length;
+    const healthyIntegrations = integrations.filter(i => i.status === 'operational').length;
     const totalIntegrations = integrations.length;
-    const avgUptime = integrations.length > 0
-      ? integrations.reduce((sum, i) => sum + (i.uptime_percentage || 0), 0) / integrations.length
+    const avgSuccessRate2 = integrations.length > 0
+      ? integrations.reduce((sum, i) => sum + (i.success_rate || 0), 0) / integrations.length
       : 0;
 
     // Determine overall health status
@@ -94,7 +94,7 @@ export async function systemHealthHandler(c: Context<{ Bindings: Env }>) {
           healthy: healthyIntegrations,
           total: totalIntegrations,
           health_rate: totalIntegrations > 0 ? Math.round((healthyIntegrations / totalIntegrations) * 100) : 100,
-          avg_uptime: Math.round(avgUptime * 100) / 100,
+          avg_success_rate: Math.round(avgSuccessRate2 * 100) / 100,
         },
       },
       timestamp: new Date().toISOString(),
@@ -130,7 +130,7 @@ export async function apiHealthHandler(c: Context<{ Bindings: Env }>) {
     }
 
     const { data, error } = await query
-      .order('checked_at', { ascending: false })
+      .order('last_check', { ascending: false })
       .limit(limit);
 
     if (error) {
@@ -139,11 +139,10 @@ export async function apiHealthHandler(c: Context<{ Bindings: Env }>) {
 
     // Group by endpoint and calculate stats
     const endpointStats = data.reduce((acc: any, record) => {
-      const key = `${record.method} ${record.endpoint}`;
+      const key = record.endpoint;
       if (!acc[key]) {
         acc[key] = {
           endpoint: record.endpoint,
-          method: record.method,
           checks: [],
           healthy_count: 0,
           total_count: 0,
@@ -153,7 +152,7 @@ export async function apiHealthHandler(c: Context<{ Bindings: Env }>) {
       }
       acc[key].checks.push(record);
       acc[key].total_count++;
-      if (record.is_healthy) acc[key].healthy_count++;
+      if (record.status === 'healthy') acc[key].healthy_count++;
       return acc;
     }, {});
 
@@ -198,7 +197,7 @@ export async function databaseHealthHandler(c: Context<{ Bindings: Env }>) {
       .from('database_health')
       .select('*')
       .eq('project_id', projectId)
-      .order('checked_at', { ascending: false })
+      .order('last_check', { ascending: false })
       .limit(limit);
 
     if (error) {
@@ -206,12 +205,12 @@ export async function databaseHealthHandler(c: Context<{ Bindings: Env }>) {
     }
 
     // Calculate statistics
-    const healthyChecks = data.filter(d => d.is_healthy).length;
+    const healthyChecks = data.filter(d => d.status === 'connected').length;
     const avgConnections = data.length > 0
-      ? data.reduce((sum, d) => sum + (d.active_connections || 0), 0) / data.length
+      ? data.reduce((sum, d) => sum + (d.connection_count || 0), 0) / data.length
       : 0;
     const avgSlowQueries = data.length > 0
-      ? data.reduce((sum, d) => sum + (d.slow_queries || 0), 0) / data.length
+      ? data.reduce((sum, d) => sum + (d.slow_queries_count || 0), 0) / data.length
       : 0;
 
     return c.json({
@@ -220,18 +219,18 @@ export async function databaseHealthHandler(c: Context<{ Bindings: Env }>) {
         total_checks: data.length,
         healthy_checks: healthyChecks,
         health_rate: data.length > 0 ? Math.round((healthyChecks / data.length) * 100) : 100,
-        avg_active_connections: Math.round(avgConnections),
+        avg_connection_count: Math.round(avgConnections),
         avg_slow_queries: Math.round(avgSlowQueries * 10) / 10,
       },
       checks: data.map(db => ({
         id: db.id,
-        database_name: db.database_name,
-        connection_pool_size: db.connection_pool_size,
-        active_connections: db.active_connections,
-        slow_queries: db.slow_queries,
-        disk_usage_gb: db.disk_usage_gb,
-        is_healthy: db.is_healthy,
-        checked_at: db.checked_at,
+        database: db.database,
+        status: db.status,
+        connection_count: db.connection_count,
+        query_avg_ms: db.query_avg_ms,
+        slow_queries_count: db.slow_queries_count,
+        last_migration: db.last_migration,
+        last_check: db.last_check,
         metadata: db.metadata,
       })),
     });
@@ -264,7 +263,7 @@ export async function integrationsHealthHandler(c: Context<{ Bindings: Env }>) {
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query.order('last_check_at', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch integration health: ${error.message}`);
@@ -272,13 +271,14 @@ export async function integrationsHealthHandler(c: Context<{ Bindings: Env }>) {
 
     // Calculate statistics
     const statusCounts = {
-      healthy: data.filter(i => i.status === 'healthy').length,
+      operational: data.filter(i => i.status === 'operational').length,
       degraded: data.filter(i => i.status === 'degraded').length,
-      down: data.filter(i => i.status === 'down').length,
+      offline: data.filter(i => i.status === 'offline').length,
+      unknown: data.filter(i => i.status === 'unknown').length,
     };
 
-    const avgUptime = data.length > 0
-      ? data.reduce((sum, i) => sum + (i.uptime_percentage || 0), 0) / data.length
+    const avgSuccessRate = data.length > 0
+      ? data.reduce((sum, i) => sum + (i.success_rate || 0), 0) / data.length
       : 0;
 
     return c.json({
@@ -286,16 +286,17 @@ export async function integrationsHealthHandler(c: Context<{ Bindings: Env }>) {
       summary: {
         total_integrations: data.length,
         by_status: statusCounts,
-        avg_uptime: Math.round(avgUptime * 100) / 100,
+        avg_success_rate: Math.round(avgSuccessRate * 100) / 100,
       },
       integrations: data.map(integration => ({
         id: integration.id,
         integration_name: integration.integration_name,
-        integration_type: integration.integration_type,
         status: integration.status,
-        uptime_percentage: integration.uptime_percentage,
-        last_error: integration.last_error,
-        last_check_at: integration.last_check_at,
+        success_rate: integration.success_rate,
+        avg_latency_ms: integration.avg_latency_ms,
+        last_successful_call: integration.last_successful_call,
+        last_failed_call: integration.last_failed_call,
+        error_count_24h: integration.error_count_24h,
         metadata: integration.metadata,
       })),
     });

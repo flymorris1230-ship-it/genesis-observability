@@ -33,7 +33,7 @@ export async function agentExecutionsHandler(c: Context<{ Bindings: Env }>) {
     }
 
     const { data, error } = await query
-      .order('executed_at', { ascending: false })
+      .order('started_at', { ascending: false })
       .limit(limit);
 
     if (error) {
@@ -42,9 +42,9 @@ export async function agentExecutionsHandler(c: Context<{ Bindings: Env }>) {
 
     // Calculate execution statistics
     const totalExecutions = data.length;
-    const successfulExecutions = data.filter(e => e.status === 'success').length;
-    const failedExecutions = data.filter(e => e.status === 'failed').length;
-    const timedoutExecutions = data.filter(e => e.status === 'timeout').length;
+    const successfulExecutions = data.filter(e => e.status === 'completed' && e.success).length;
+    const failedExecutions = data.filter(e => e.status === 'failed' || (e.status === 'completed' && !e.success)).length;
+    const cancelledExecutions = data.filter(e => e.status === 'cancelled').length;
 
     const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
 
@@ -64,15 +64,15 @@ export async function agentExecutionsHandler(c: Context<{ Bindings: Env }>) {
           total: 0,
           success: 0,
           failed: 0,
-          timeout: 0,
+          cancelled: 0,
           total_tokens: 0,
           total_cost: 0,
         };
       }
       acc[name].total++;
-      if (execution.status === 'success') acc[name].success++;
-      if (execution.status === 'failed') acc[name].failed++;
-      if (execution.status === 'timeout') acc[name].timeout++;
+      if (execution.status === 'completed' && execution.success) acc[name].success++;
+      if (execution.status === 'failed' || (execution.status === 'completed' && !execution.success)) acc[name].failed++;
+      if (execution.status === 'cancelled') acc[name].cancelled++;
       acc[name].total_tokens += execution.tokens_used || 0;
       acc[name].total_cost += execution.cost_usd || 0;
       return acc;
@@ -90,7 +90,7 @@ export async function agentExecutionsHandler(c: Context<{ Bindings: Env }>) {
         total_executions: totalExecutions,
         successful: successfulExecutions,
         failed: failedExecutions,
-        timedout: timedoutExecutions,
+        cancelled: cancelledExecutions,
         success_rate: Math.round(successRate * 10) / 10,
         avg_duration_ms: Math.round(avgDuration),
         total_tokens: totalTokens,
@@ -100,13 +100,16 @@ export async function agentExecutionsHandler(c: Context<{ Bindings: Env }>) {
       executions: data.map(execution => ({
         id: execution.id,
         agent_name: execution.agent_name,
+        task_id: execution.task_id,
         task_type: execution.task_type,
         status: execution.status,
+        success: execution.success,
+        started_at: execution.started_at,
+        completed_at: execution.completed_at,
         duration_ms: execution.duration_ms,
+        llm_calls_count: execution.llm_calls_count,
         tokens_used: execution.tokens_used,
         cost_usd: execution.cost_usd,
-        error_message: execution.error_message,
-        executed_at: execution.executed_at,
         metadata: execution.metadata,
       })),
     });
@@ -127,6 +130,7 @@ export async function agentPerformanceHandler(c: Context<{ Bindings: Env }>) {
   try {
     const projectId = c.req.query('project_id') || 'GAC_FactoryOS';
     const agentName = c.req.query('agent_name'); // optional filter
+    const period = c.req.query('period') || 'day'; // hour, day, week, month
     const startDate = c.req.query('start_date');
     const endDate = c.req.query('end_date');
 
@@ -135,21 +139,22 @@ export async function agentPerformanceHandler(c: Context<{ Bindings: Env }>) {
     let query = supabase
       .from('agent_performance')
       .select('*')
-      .eq('project_id', projectId);
+      .eq('project_id', projectId)
+      .eq('period', period);
 
     if (agentName) {
       query = query.eq('agent_name', agentName);
     }
 
     if (startDate) {
-      query = query.gte('date', startDate);
+      query = query.gte('timestamp', startDate);
     }
 
     if (endDate) {
-      query = query.lte('date', endDate);
+      query = query.lte('timestamp', endDate);
     }
 
-    const { data, error } = await query.order('date', { ascending: false });
+    const { data, error } = await query.order('timestamp', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to fetch agent performance: ${error.message}`);
@@ -213,7 +218,8 @@ export async function agentPerformanceHandler(c: Context<{ Bindings: Env }>) {
       performance: data.map(perf => ({
         id: perf.id,
         agent_name: perf.agent_name,
-        date: perf.date,
+        period: perf.period,
+        timestamp: perf.timestamp,
         total_executions: perf.total_executions,
         successful_executions: perf.successful_executions,
         failed_executions: perf.failed_executions,
@@ -221,7 +227,6 @@ export async function agentPerformanceHandler(c: Context<{ Bindings: Env }>) {
         avg_duration_ms: perf.avg_duration_ms,
         total_tokens: perf.total_tokens,
         total_cost_usd: perf.total_cost_usd,
-        metadata: perf.metadata,
       })),
     });
   } catch (error: any) {
@@ -249,13 +254,14 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
         .from('agent_executions')
         .select('*')
         .eq('project_id', projectId)
-        .order('executed_at', { ascending: false })
+        .order('started_at', { ascending: false })
         .limit(100),
       supabase
         .from('agent_performance')
         .select('*')
         .eq('project_id', projectId)
-        .order('date', { ascending: false })
+        .eq('period', 'day')
+        .order('timestamp', { ascending: false })
         .limit(30),
     ]);
 
@@ -267,7 +273,7 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
 
     // Calculate quick stats from executions
     const successRate = executions.length > 0
-      ? (executions.filter(e => e.status === 'success').length / executions.length) * 100
+      ? (executions.filter(e => e.status === 'completed' && e.success).length / executions.length) * 100
       : 0;
 
     const avgDuration = executions.length > 0
@@ -308,7 +314,7 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
       agents: Array.from(uniqueAgents).map(agentName => {
         const agentExecutions = executions.filter(e => e.agent_name === agentName);
         const agentSuccessRate = agentExecutions.length > 0
-          ? (agentExecutions.filter(e => e.status === 'success').length / agentExecutions.length) * 100
+          ? (agentExecutions.filter(e => e.status === 'completed' && e.success).length / agentExecutions.length) * 100
           : 0;
         return {
           agent_name: agentName,
