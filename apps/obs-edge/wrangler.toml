@@ -14,15 +14,14 @@ name = "obs-edge-prod"
 name = "obs-edge-dev"
 
 # KV namespace for rate limiting
-# Create KV namespace: wrangler kv:namespace create RATE_LIMIT
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "placeholder" # Replace with actual KV namespace ID after creation
+id = "ec69276da69d4621861b547c002ffc7a"
 
 # Production KV
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "placeholder" # Replace with production KV namespace ID
+id = "7c46b5a10a094a63833f9a88a7bfc20f"
 
 # Environment variables
 [vars]

@@ -306,7 +306,7 @@ apps/
 2. ✅ 建立 obs-dashboard MVP
 3. ✅ 設置 CI/CD Pipeline (GitHub Actions)
 4. ✅ 生成 Phase 3 品質報告
-5. ⏳ 部署與驗證 (Cloudflare + Vercel) - 待執行
+5. ✅ 部署到生產環境 (部分完成 - 見下方部署狀態)
 
 ## 📦 交付清單
 
@@ -328,6 +328,60 @@ apps/
 - Files Changed: 51
 - Insertions: ~3,500 lines
 - Tests: 70 (100% passing)
+
+## 🚀 部署狀態
+
+### Phase 3.6: 生產部署 ✅ (部分完成)
+
+**obs-edge Cloudflare Worker**: ✅ **已部署並運行**
+
+- **部署時間**: 2025-10-07 13:53
+- **Worker URL**: https://obs-edge.flymorris1230.workers.dev
+- **版本 ID**: d46af32d-fbda-4e1c-a58e-89249c3b05bb
+- **KV Namespaces**:
+  - Development: `ec69276da69d4621861b547c002ffc7a`
+  - Production: `7c46b5a10a094a63833f9a88a7bfc20f`
+- **Secrets 狀態**:
+  - ✅ `API_KEY`: 已設置 (認證正常運作)
+  - ⏳ `SUPABASE_URL`: 待配置 (需要用戶設置)
+  - ⏳ `SUPABASE_SERVICE_KEY`: 待配置 (需要用戶設置)
+- **測試結果**:
+  - ✅ Worker 啟動成功
+  - ✅ API 認證機制運作正常
+  - ⏳ 資料庫操作需 Supabase 配置
+
+**obs-dashboard (Next.js)**: 🟡 **已建置，待部署**
+
+- **建置狀態**: ✅ 成功 (237 kB main bundle)
+- **TypeScript**: ✅ 通過
+- **Lint**: ✅ 通過
+- **環境變數**: ✅ 已配置
+  - `NEXT_PUBLIC_OBS_EDGE_URL=https://obs-edge.flymorris1230.workers.dev`
+  - `NEXT_PUBLIC_OBS_EDGE_API_KEY=a590...`
+- **部署狀態**: ⏳ 待 Vercel 認證後部署
+- **預計部署**: 用戶執行 `vercel login && vercel deploy --prod`
+
+**新增文件**:
+
+30. ✅ DEPLOYMENT_SECRETS.md (Worker 秘密管理)
+31. ✅ DEPLOYMENT_GUIDE.md (完整部署指南)
+32. ✅ .env.production (Dashboard 生產環境變數)
+
+**部署檢查清單**:
+
+- [x] 建立 Cloudflare KV namespaces
+- [x] 部署 Worker 到 Cloudflare
+- [x] 設置 API_KEY secret
+- [x] 測試 Worker API 認證
+- [x] 建置 Dashboard 成功
+- [x] 配置 Dashboard 環境變數
+- [ ] 建立 Supabase 專案 (需用戶操作)
+- [ ] 設置資料庫 schema (需用戶操作)
+- [ ] 設置 Supabase secrets (需用戶操作)
+- [ ] 部署 Dashboard 到 Vercel (需用戶操作)
+- [ ] 端對端整合測試 (待 Supabase 配置完成)
+
+詳細部署指南: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ## 🎯 後續建議
 
