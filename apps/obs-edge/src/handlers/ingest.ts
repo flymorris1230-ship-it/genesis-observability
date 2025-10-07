@@ -56,7 +56,7 @@ export async function ingestHandler(c: Context<{ Bindings: Env }>) {
       total_tokens,
       cost_usd: Math.round(cost_usd * 10000) / 10000, // 4 decimal places
       latency_ms: body.latency_ms || 0,
-      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       metadata: body.metadata || {},
     };
 

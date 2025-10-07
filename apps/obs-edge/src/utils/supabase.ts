@@ -32,7 +32,7 @@ export interface LLMUsageData {
   total_tokens: number;
   cost_usd: number;
   latency_ms: number;
-  timestamp: string;
+  created_at?: string;
   metadata?: Record<string, any>;
 }
 
@@ -73,9 +73,9 @@ export async function getMetrics(
     .from('llm_usage')
     .select('*')
     .eq('project_id', projectId)
-    .gte('timestamp', startDate)
-    .lte('timestamp', endDate)
-    .order('timestamp', { ascending: true });
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: true });
 
   if (error) {
     throw new Error(`Failed to fetch metrics: ${error.message}`);
@@ -105,7 +105,7 @@ export async function getMetrics(
     avgLatency: Math.round(avgLatency),
     modelBreakdown,
     dataPoints: data.map(row => ({
-      timestamp: row.timestamp,
+      timestamp: row.created_at,
       tokens: row.total_tokens,
       cost: row.cost_usd,
       latency: row.latency_ms,
@@ -124,11 +124,11 @@ export async function getCostSummary(
 ): Promise<any> {
   const { data, error } = await supabase
     .from('llm_usage')
-    .select('timestamp, cost_usd, model, provider')
+    .select('created_at, cost_usd, model, provider')
     .eq('project_id', projectId)
-    .gte('timestamp', startDate)
-    .lte('timestamp', endDate)
-    .order('timestamp', { ascending: true });
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: true });
 
   if (error) {
     throw new Error(`Failed to fetch cost summary: ${error.message}`);
@@ -139,7 +139,7 @@ export async function getCostSummary(
   // Group by day
   const dailyCosts: Record<string, number> = {};
   data.forEach(row => {
-    const date = row.timestamp.split('T')[0];
+    const date = row.created_at.split('T')[0];
     dailyCosts[date] = (dailyCosts[date] || 0) + row.cost_usd;
   });
 
