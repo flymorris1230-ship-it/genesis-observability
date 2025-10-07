@@ -30,7 +30,8 @@
 
 ## 🚀 Quick Start
 
-### Live Dashboard (3 Versions Available)
+### Live Dashboard (Production + Local)
+🌐 **[Production Dashboard](https://genesis-observability-dashboard-7jr248d9n.vercel.app)** - ✨ **LIVE** - Phase 2 on Vercel
 📊 **[Phase 2 Dashboard](./index-phase2.html)** - ✨ **RECOMMENDED** - Full responsive + WCAG AAA
 📊 **[Phase 1 Dashboard](./index-optimized.html)** - MCP-optimized + WCAG AA
 📊 **[Original Dashboard](./index.html)** - Basic version

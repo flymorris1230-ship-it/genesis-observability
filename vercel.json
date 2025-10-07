@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "name": "genesis-observability-dashboard",
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "devCommand": "",
+  "installCommand": "",
+  "framework": null,
+  "public": true,
+  "github": {
+    "enabled": true,
+    "autoAlias": true
+  }
+}
