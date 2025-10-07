@@ -104,6 +104,11 @@ app.get('/agents/executions', agentExecutionsHandler);
 app.get('/agents/performance', agentPerformanceHandler);
 app.get('/agents/summary', agentSummaryHandler);
 
+// TEMPORARY: Admin migration endpoint
+import { adminMigrateHandler } from './handlers/admin-migrate';
+app.use('/admin/migrate', authMiddleware);
+app.post('/admin/migrate', adminMigrateHandler);
+
 // 404 handler
 app.notFound((c) => {
   return c.json({ error: 'Not Found' }, 404);

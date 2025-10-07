@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genesis Observability | Unified Dashboard - DEMO (Mock Data)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* Demo mode indicator */
+        .demo-badge {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Copy styles from original dashboard */
+        :root {
+            --color-primary: #3730a3;
+            --color-primary-light: #4f46e5;
+            --color-success: #047857;
+            --color-warning: #b45309;
+            --color-error: #b91c1c;
+            --color-info: #1e40af;
+            --color-text-primary: #111827;
+            --color-text-secondary: #374151;
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f9fafb;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        *:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #6b21a8 100%);
+        }
+
+        .card-hover {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .responsive-table {
+                display: none;
+            }
+            .mobile-card-view {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .responsive-table {
+                display: table;
+            }
+            .mobile-card-view {
+                display: none;
+            }
+        }
+
+        .mobile-agent-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .mobile-agent-card:hover {
+            border-color: var(--color-primary);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="demo-badge">
+        🧪 DEMO MODE - Mock Data
+    </div>
+
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6 max-w-7xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold">Genesis Observability</h1>
+                    <p class="text-indigo-200 text-sm sm:text-base">Unified Dashboard - Factory OS & LLM Monitoring</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs sm:text-sm text-indigo-200">Last Updated</div>
+                    <div id="last-updated" class="text-sm sm:text-base font-semibold">Just now</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main role="main" class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Factory OS Stats -->
+        <section aria-label="Factory OS statistics" class="mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">📦 Factory OS Progress</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Overall Progress</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-lg flex items-center justify-center text-white text-xl">📊</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">65%</div>
+                    <div class="text-sm text-gray-600">4 modules active</div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Current Sprint</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center text-white text-xl">⚡</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">Sprint 2</div>
+                    <div class="text-sm text-gray-600">Day 3 of 14</div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">AI Agents</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg flex items-center justify-center text-white text-xl">🤖</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">98%</div>
+                    <div class="text-sm text-gray-600">Success Rate</div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Features</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg flex items-center justify-center text-white text-xl">✨</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">22/65</div>
+                    <div class="text-sm text-gray-600">Completed</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LLM Usage & Cost Monitoring -->
+        <section aria-label="LLM usage and cost statistics" class="mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+                💬 LLM Usage & Cost Monitoring
+                <span class="text-sm font-normal text-gray-500">(Last 7 Days)</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Total Tokens -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Total Tokens</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white text-xl">🔢</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">71,570</div>
+                    <div class="text-sm text-gray-600">45,230 in / 26,340 out</div>
+                </div>
+
+                <!-- Total Cost -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Total Cost</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center text-white text-xl">💰</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">$0.72</div>
+                    <div class="text-sm text-gray-600">Avg: $0.0171/req</div>
+                </div>
+
+                <!-- API Requests -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">API Requests</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-violet-600 to-violet-700 rounded-lg flex items-center justify-center text-white text-xl">📡</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">42</div>
+                    <div class="text-sm text-gray-600">6 requests/day avg</div>
+                </div>
+
+                <!-- Average Latency -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover fade-in">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-700 text-sm font-bold uppercase">Avg Latency</h3>
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-600 to-amber-700 rounded-lg flex items-center justify-center text-white text-xl">⚡</div>
+                    </div>
+                    <div class="text-4xl font-bold text-gray-900 mb-2">1,348ms</div>
+                    <div class="text-sm text-gray-600">✅ Good performance</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LLM Charts -->
+        <section aria-label="LLM usage visualizations" class="mb-8">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">📊 LLM Usage Analytics</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">📈 Token Usage Trend (7 Days)</h3>
+                    <div class="chart-container">
+                        <canvas id="llmTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">💵 Cost by Provider</h3>
+                    <div class="chart-container">
+                        <canvas id="llmCostChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LLM Model Distribution -->
+        <section aria-label="LLM model usage details" class="mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">🔍 Model Distribution (Last 7 Days)</h2>
+
+                <!-- Desktop Table -->
+                <div class="overflow-x-auto responsive-table">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Model</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Provider</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Requests</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Tokens</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Cost (USD)</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Avg Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">claude-3-7-sonnet-20250219</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">anthropic</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">25</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">47,850</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">$0.4235</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">1,265ms</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">gpt-4-0125-preview</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">openai</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">13</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">17,680</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">$0.2142</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">2,058ms</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">gemini-pro-1.5</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">google</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">4</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">6,040</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">$0.0268</td>
+                                <td class="px-4 py-3 text-sm text-gray-900 text-right">895ms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="mobile-card-view space-y-3">
+                    <div class="mobile-agent-card">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-bold text-gray-900">claude-3-7-sonnet-20250219</div>
+                                <div class="text-sm text-gray-600">anthropic</div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">25 reqs</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-sm">
+                            <div>
+                                <div class="text-gray-600">Tokens</div>
+                                <div class="font-semibold text-gray-900">47,850</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Cost</div>
+                                <div class="font-semibold text-gray-900">$0.4235</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Latency</div>
+                                <div class="font-semibold text-gray-900">1,265ms</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-agent-card">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-bold text-gray-900">gpt-4-0125-preview</div>
+                                <div class="text-sm text-gray-600">openai</div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">13 reqs</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-sm">
+                            <div>
+                                <div class="text-gray-600">Tokens</div>
+                                <div class="font-semibold text-gray-900">17,680</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Cost</div>
+                                <div class="font-semibold text-gray-900">$0.2142</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Latency</div>
+                                <div class="font-semibold text-gray-900">2,058ms</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-agent-card">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-bold text-gray-900">gemini-pro-1.5</div>
+                                <div class="text-sm text-gray-600">google</div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">4 reqs</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-sm">
+                            <div>
+                                <div class="text-gray-600">Tokens</div>
+                                <div class="font-semibold text-gray-900">6,040</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Cost</div>
+                                <div class="font-semibold text-gray-900">$0.0268</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">Latency</div>
+                                <div class="font-semibold text-gray-900">895ms</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Banner -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-8 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">Demo Mode Active</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>This dashboard is displaying <strong>mock data</strong> for demonstration purposes. To use real data:</p>
+                        <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Execute the database migration in Supabase SQL Editor</li>
+                            <li>Run: <code class="bg-amber-100 px-2 py-1 rounded">./scripts/verify-and-insert-testdata.sh</code></li>
+                            <li>Use <code class="bg-amber-100 px-2 py-1 rounded">index-unified.html</code> instead</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">Genesis Observability Platform v1.0 | Demo Mode</p>
+            <p class="text-xs text-gray-400 mt-2">🧪 Using mock data for demonstration</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mock data for demonstration
+        const mockTrendData = {
+            labels: ['10/1', '10/2', '10/3', '10/4', '10/5', '10/6', '10/7'],
+            data: [8650, 9240, 10120, 11850, 9980, 10630, 11100]
+        };
+
+        const mockCostData = {
+            labels: ['Anthropic', 'OpenAI', 'Google'],
+            data: [0.4235, 0.2142, 0.0268]
+        };
+
+        // Token Trend Chart
+        const trendCtx = document.getElementById('llmTrendChart');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: mockTrendData.labels,
+                datasets: [{
+                    label: 'Total Tokens',
+                    data: mockTrendData.data,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.parsed.y.toLocaleString()} tokens`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => value.toLocaleString()
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cost Chart
+        const costCtx = document.getElementById('llmCostChart');
+        new Chart(costCtx, {
+            type: 'bar',
+            data: {
+                labels: mockCostData.labels,
+                datasets: [{
+                    label: 'Cost (USD)',
+                    data: mockCostData.data,
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `$${context.parsed.y.toFixed(4)}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => `$${value.toFixed(2)}`
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update timestamp
+        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+    </script>
+</body>
+</html>
