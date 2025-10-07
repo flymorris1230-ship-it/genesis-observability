@@ -1,0 +1,27 @@
+name = "obs-edge"
+main = "src/index.ts"
+compatibility_date = "2025-01-07"
+compatibility_flags = ["nodejs_compat"]
+
+# Production environment
+[env.production]
+name = "obs-edge-prod"
+route = { pattern = "api.observability.genesis.com/*", zone_name = "genesis.com" }
+
+# Development environment
+[env.development]
+name = "obs-edge-dev"
+
+# KV namespace for rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "placeholder" # Replace with actual KV namespace ID
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# Secrets (use wrangler secret put)
+# SUPABASE_URL - Set via wrangler secret
+# SUPABASE_SERVICE_KEY - Set via wrangler secret
+# API_KEY - Set via wrangler secret
