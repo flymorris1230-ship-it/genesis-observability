@@ -9,6 +9,23 @@ import { logger } from 'hono/logger';
 import { ingestHandler } from './handlers/ingest';
 import { metricsHandler } from './handlers/metrics';
 import { costsHandler } from './handlers/costs';
+import {
+  modulesProgressHandler,
+  sprintProgressHandler,
+  tasksProgressHandler,
+  overviewProgressHandler,
+} from './handlers/progress';
+import {
+  systemHealthHandler,
+  apiHealthHandler,
+  databaseHealthHandler,
+  integrationsHealthHandler,
+} from './handlers/health';
+import {
+  agentExecutionsHandler,
+  agentPerformanceHandler,
+  agentSummaryHandler,
+} from './handlers/agents';
 import { authMiddleware } from './middleware/auth';
 import { rateLimitMiddleware } from './middleware/rate-limit';
 
@@ -58,6 +75,38 @@ app.get('/metrics', metricsHandler);
 app.use('/costs', authMiddleware);
 app.use('/costs', rateLimitMiddleware);
 app.get('/costs', costsHandler);
+
+// Progress tracking routes
+app.use('/progress/*', authMiddleware);
+app.use('/progress/*', rateLimitMiddleware);
+app.get('/progress/modules', modulesProgressHandler);
+app.get('/progress/sprint', sprintProgressHandler);
+app.get('/progress/tasks', tasksProgressHandler);
+app.get('/progress/overview', overviewProgressHandler);
+
+// Health monitoring routes
+app.use('/health/system', authMiddleware);
+app.use('/health/system', rateLimitMiddleware);
+app.get('/health/system', systemHealthHandler);
+
+app.use('/health/api', authMiddleware);
+app.use('/health/api', rateLimitMiddleware);
+app.get('/health/api', apiHealthHandler);
+
+app.use('/health/database', authMiddleware);
+app.use('/health/database', rateLimitMiddleware);
+app.get('/health/database', databaseHealthHandler);
+
+app.use('/health/integrations', authMiddleware);
+app.use('/health/integrations', rateLimitMiddleware);
+app.get('/health/integrations', integrationsHealthHandler);
+
+// Agent monitoring routes
+app.use('/agents/*', authMiddleware);
+app.use('/agents/*', rateLimitMiddleware);
+app.get('/agents/executions', agentExecutionsHandler);
+app.get('/agents/performance', agentPerformanceHandler);
+app.get('/agents/summary', agentSummaryHandler);
 
 // 404 handler
 app.notFound((c) => {
