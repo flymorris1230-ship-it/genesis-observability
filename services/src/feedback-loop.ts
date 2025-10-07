@@ -272,13 +272,20 @@ export class FeedbackLoop {
         archived++;
         console.log(`🗄️  Auto-archived knowledge: ${suggestion.knowledgeId}`);
       } else if (suggestion.suggestion === 'improve') {
-        // Flag for manual improvement
-        await this.supabase
+        // Flag for manual improvement by adding tag
+        const { data: current } = await this.supabase
           .from('knowledge_base')
-          .update({
-            tags: this.supabase.raw('array_append(tags, ?)', ['needs-improvement']),
-          })
-          .eq('id', suggestion.knowledgeId);
+          .select('tags')
+          .eq('id', suggestion.knowledgeId)
+          .single();
+
+        if (current) {
+          const newTags = [...(current.tags || []), 'needs-improvement'];
+          await this.supabase
+            .from('knowledge_base')
+            .update({ tags: newTags })
+            .eq('id', suggestion.knowledgeId);
+        }
 
         improved++;
         console.log(`🔧 Flagged for improvement: ${suggestion.knowledgeId}`);
