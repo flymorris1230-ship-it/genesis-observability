@@ -82,3 +82,74 @@ export interface TaskExecution {
   timeSpent: number; // minutes
   usedKnowledge: string[]; // IDs of used knowledge
 }
+
+// Phase 2: Quality Scoring Types
+export interface QualityMetrics {
+  executionTime: number; // milliseconds
+  errorCount: number;
+  knowledgeUsed: number;
+  outputLength: number;
+  hasTests: boolean;
+  hasDocumentation: boolean;
+}
+
+export interface QualityScore {
+  overall: number; // 0-10 scale
+  breakdown: {
+    efficiency: number;
+    reliability: number;
+    knowledgeUtilization: number;
+    completeness: number;
+  };
+  feedback: string[];
+}
+
+// Phase 2: Feedback Loop Types
+export interface TaskFailure {
+  taskId: string;
+  description: string;
+  errorMessage: string;
+  attemptedKnowledge: string[];
+  timestamp: Date;
+}
+
+export interface KnowledgeOptimizationSuggestion {
+  knowledgeId: string;
+  currentRating: number;
+  usageCount: number;
+  failureRate: number;
+  suggestion: 'improve' | 'archive' | 'split' | 'merge';
+  reason: string;
+}
+
+// Phase 2: Monitoring API Types
+export interface AgentStats {
+  totalTasks: number;
+  successRate: number;
+  avgQualityScore: number;
+  avgExecutionTime: number;
+  period: string;
+}
+
+export interface QualityTrend {
+  date: string;
+  avgQuality: number;
+  taskCount: number;
+  successRate: number;
+}
+
+export interface CostTracking {
+  date: string;
+  totalExecutions: number;
+  avgExecutionTimeMs: number;
+  estimatedLLMCalls: number;
+  estimatedCostUSD: number;
+}
+
+export interface LearningCurveData {
+  weekNumber: number;
+  avgQuality: number;
+  taskCount: number;
+  knowledgeGrowth: number;
+  successRate: number;
+}

@@ -1,12 +1,20 @@
 /**
  * AgentTrainingSystem - AI Training Loop
- * Before-task knowledge retrieval + After-task learning logging
+ * Before-task knowledge retrieval + After-task learning logging + Quality assessment
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { RAGEngine } from './rag-engine.js';
 import { DevJournalLogger } from './dev-journal-logger.js';
-import type { RetrievedDocument, TaskExecution, LearningCurveMetrics } from './types.js';
+import { QualityScorer } from './quality-scorer.js';
+import { FeedbackLoop } from './feedback-loop.js';
+import type {
+  RetrievedDocument,
+  TaskExecution,
+  LearningCurveMetrics,
+  QualityMetrics,
+  QualityScore,
+} from './types.js';
 
 interface Task {
   description: string;
@@ -18,6 +26,8 @@ export class AgentTrainingSystem {
   private rag: RAGEngine;
   private logger: DevJournalLogger;
   private supabase: SupabaseClient;
+  private qualityScorer: QualityScorer;
+  private feedbackLoop: FeedbackLoop;
 
   constructor(
     supabaseUrl: string,
@@ -33,6 +43,8 @@ export class AgentTrainingSystem {
       knowledgeBaseDir
     );
     this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.qualityScorer = new QualityScorer();
+    this.feedbackLoop = new FeedbackLoop(supabaseUrl, supabaseKey);
   }
 
   /**
@@ -63,13 +75,25 @@ export class AgentTrainingSystem {
   }
 
   /**
-   * After task execution: Log learning and feedback
+   * After task execution: Log learning and feedback with quality assessment
    */
-  async afterTask(task: TaskExecution): Promise<void> {
+  async afterTask(
+    task: TaskExecution,
+    metrics?: QualityMetrics
+  ): Promise<{ qualityScore: QualityScore; knowledgeId: string }> {
     console.log(`📝 Logging learning from task...`);
 
+    // Calculate quality score if metrics provided
+    let qualityScore: QualityScore | undefined;
+    if (metrics) {
+      qualityScore = this.qualityScorer.calculateQuality(metrics);
+      console.log(
+        `📊 Quality Score: ${qualityScore.overall}/10 (${qualityScore.feedback.length} feedback items)`
+      );
+    }
+
     // Log the solution as new knowledge
-    await this.logger.logDevelopment({
+    const knowledgeId = await this.logger.logDevelopment({
       title: `Solution: ${task.description.substring(0, 80)}`,
       content: task.solution,
       type: 'learning',
@@ -78,12 +102,70 @@ export class AgentTrainingSystem {
       phase: process.env.CURRENT_PHASE || 'Unknown',
     });
 
+    // Record execution in agent_executions table
+    if (metrics && qualityScore) {
+      await this.supabase.from('agent_executions').insert({
+        task_description: task.description,
+        execution_time_ms: metrics.executionTime,
+        error_count: metrics.errorCount,
+        knowledge_used: metrics.knowledgeUsed,
+        output_length: metrics.outputLength,
+        has_tests: metrics.hasTests,
+        has_documentation: metrics.hasDocumentation,
+        quality_score: qualityScore.overall,
+        quality_breakdown: qualityScore.breakdown,
+        feedback: qualityScore.feedback,
+        phase: process.env.CURRENT_PHASE || 'Unknown',
+        status: metrics.errorCount > 0 ? 'partial' : 'success',
+      });
+    }
+
     // Update usage statistics for used knowledge
-    for (const knowledgeId of task.usedKnowledge) {
-      await this.updateKnowledgeStats(knowledgeId, task.quality);
+    for (const knowledgeIdUsed of task.usedKnowledge) {
+      await this.updateKnowledgeStats(knowledgeIdUsed, task.quality);
     }
 
     console.log(`✅ Learning logged, knowledge stats updated`);
+
+    return {
+      qualityScore: qualityScore || { overall: task.quality, breakdown: {} as any, feedback: [] },
+      knowledgeId,
+    };
+  }
+
+  /**
+   * Record task failure for learning
+   */
+  async recordFailure(
+    taskId: string,
+    description: string,
+    errorMessage: string,
+    attemptedKnowledge: string[]
+  ): Promise<void> {
+    await this.feedbackLoop.recordFailure({
+      taskId,
+      description,
+      errorMessage,
+      attemptedKnowledge,
+      timestamp: new Date(),
+    });
+
+    // Record in agent_executions
+    await this.supabase.from('agent_executions').insert({
+      task_description: description,
+      execution_time_ms: 0,
+      error_count: 1,
+      knowledge_used: attemptedKnowledge.length,
+      output_length: 0,
+      has_tests: false,
+      has_documentation: false,
+      quality_score: 0,
+      quality_breakdown: {},
+      feedback: [errorMessage],
+      phase: process.env.CURRENT_PHASE || 'Unknown',
+      status: 'failure',
+      metadata: { error: errorMessage },
+    });
   }
 
   /**
