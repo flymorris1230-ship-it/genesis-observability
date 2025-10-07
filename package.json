@@ -1,0 +1,47 @@
+{
+  "name": "genesis-observability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Enterprise-Grade AI Collaboration Platform Observability & Cost Tracking System",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/genesis-observability.git"
+  },
+  "author": "Morris Lin",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "test:e2e": "playwright test",
+    "test:load": "k6 run tests/load/scenario.js",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:studio": "cd infra/supabase && supabase db studio",
+    "db:migrate": "cd infra/supabase && supabase db push",
+    "deploy:preview": "turbo run deploy:preview",
+    "deploy:production": "turbo run deploy:production"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@types/node": "^20.10.5",
+    "prettier": "^3.1.1",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.1"
+}
