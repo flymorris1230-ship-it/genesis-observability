@@ -464,6 +464,93 @@ Total Infrastructure:         ~$31/month
 
 ---
 
+## 📖 如何使用
+
+### ✨ 系統已部署並可使用！
+
+您的 Genesis Observability 系統已完全部署：
+
+- **Worker API**: https://obs-edge.flymorris1230.workers.dev
+- **Dashboard**: https://genesis-observability-obs-dashboard.vercel.app
+- **API KEY**: `a590aec22adeab9bb9fcf8ff81ccf790a588a298edeffce3216b317c18f87f9e`
+
+### 🎯 3 步驟開始追蹤 LLM 使用量
+
+#### 1. 整合到您的應用
+
+在 LLM 調用後發送使用數據：
+
+**Node.js / TypeScript**:
+```typescript
+import fetch from 'node-fetch';
+
+// 在調用 LLM 後
+await fetch('https://obs-edge.flymorris1230.workers.dev/ingest', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer a590aec22adeab9bb9fcf8ff81ccf790a588a298edeffce3216b317c18f87f9e',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    project_id: 'my-app',  // 您的專案名稱
+    model: 'gpt-4-turbo',
+    provider: 'openai',
+    input_tokens: 1000,
+    output_tokens: 500,
+    latency_ms: 1200
+  })
+}).catch(console.error);
+```
+
+**Python**:
+```python
+import requests
+
+requests.post('https://obs-edge.flymorris1230.workers.dev/ingest',
+  headers={'Authorization': 'Bearer a590aec22adeab9bb9fcf8ff81ccf790a588a298edeffce3216b317c18f87f9e'},
+  json={'project_id': 'my-app', 'model': 'gpt-4', ...}
+)
+```
+
+#### 2. 查看 Dashboard
+
+前往 [Dashboard](https://genesis-observability-obs-dashboard.vercel.app) 查看：
+- 📈 即時 tokens 使用量與趨勢
+- 💰 成本分析與預測
+- ⚡ 性能監控與延遲分析
+- 📊 不同 model 的使用比較
+
+#### 3. 使用 API 查詢
+
+```bash
+# 查詢 metrics
+curl "https://obs-edge.flymorris1230.workers.dev/metrics?project_id=my-app" \
+  -H "Authorization: Bearer a590aec22adeab9bb9fcf8ff81ccf790a588a298edeffce3216b317c18f87f9e"
+
+# 查詢 costs
+curl "https://obs-edge.flymorris1230.workers.dev/costs?project_id=my-app" \
+  -H "Authorization: Bearer a590aec22adeab9bb9fcf8ff81ccf790a588a298edeffce3216b317c18f87f9e"
+```
+
+### 📚 完整文檔
+
+- **[HOW_TO_USE.md](./HOW_TO_USE.md)** - 完整使用指南（所有語言與框架）
+- **[INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md)** - 詳細整合指南
+- **[examples/](./examples/)** - 程式碼範例（Node.js, Python, Go）
+- **[DEPLOYMENT_SUCCESS.md](./DEPLOYMENT_SUCCESS.md)** - 部署資訊與測試結果
+
+### 🧪 快速測試
+
+```bash
+# 運行測試腳本
+./examples/test-tracking.sh
+
+# 查看 Dashboard 中的測試數據
+open https://genesis-observability-obs-dashboard.vercel.app
+```
+
+---
+
 ## 🚀 Quick Start
 
 ### ⚡ Get Started in 15 Minutes
