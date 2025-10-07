@@ -6,6 +6,7 @@ import { subDays } from "date-fns";
 import { FilterPanel, type FilterState } from "@/components/FilterPanel";
 import { MetricsChart } from "@/components/MetricsChart";
 import { CostTrend } from "@/components/CostTrend";
+import { ModelBreakdown } from "@/components/ModelBreakdown";
 import { obsEdgeClient, apiKeys } from "@/lib/api-client";
 
 export default function DashboardPage() {
@@ -74,6 +75,9 @@ export default function DashboardPage() {
           <div className="grid gap-6 md:grid-cols-3">
             <CostTrend data={costData} isLoading={isLoadingCosts} />
           </div>
+
+          {/* Model Performance Breakdown */}
+          <ModelBreakdown data={metricsData} isLoading={isLoadingMetrics} />
         </div>
       </div>
     </div>
