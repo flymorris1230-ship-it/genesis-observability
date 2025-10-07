@@ -10,8 +10,8 @@ import { obsEdgeClient, apiKeys } from "@/lib/api-client";
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState<FilterState>({
-    projectId: "test-project",
-    startDate: subDays(new Date(), 7).toISOString(),
+    projectId: "GAC_FactoryOS",
+    startDate: subDays(new Date(), 30).toISOString(),
     endDate: new Date().toISOString(),
   });
 
