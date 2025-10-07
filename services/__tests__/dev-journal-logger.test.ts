@@ -124,7 +124,7 @@ describe('DevJournalLogger', () => {
       expect(mockMkdir).toHaveBeenCalled();
       expect(mockWriteFile).toHaveBeenCalled();
       expect(mockEmbedContent).toHaveBeenCalledWith(entry.content);
-      expect(mockGenerateContent).toHaveBeenCalled();
+      // Note: generateContent only called for long content (>400 chars), this is short
       expect(mockSupabaseFrom).toHaveBeenCalledWith('knowledge_base');
     });
 

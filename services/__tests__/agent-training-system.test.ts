@@ -252,9 +252,11 @@ describe('AgentTrainingSystem', () => {
     it('should handle phases with no data', async () => {
       mockSupabaseSelect.mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              data: [],
+              error: null,
+            }),
           }),
         }),
       });

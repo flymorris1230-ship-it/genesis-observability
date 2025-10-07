@@ -55,7 +55,11 @@ describe('Vector Search Integration Tests', () => {
     it('should support multiple similarity metrics', async () => {
       // Verify that RAG Engine supports different search modes
       const { RAGEngine } = await import('../../src/rag-engine.js');
-      const ragEngine = new RAGEngine('test', 'test', 'test');
+      const ragEngine = new RAGEngine(
+        'https://test.supabase.co',
+        'test-key',
+        'test-gemini-key'
+      );
 
       expect(ragEngine).toHaveProperty('retrieve');
       expect(ragEngine).toHaveProperty('searchText');
