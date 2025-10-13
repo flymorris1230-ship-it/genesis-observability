@@ -241,6 +241,7 @@ export async function agentPerformanceHandler(c: Context<{ Bindings: Env }>) {
 /**
  * GET /agents/summary
  * Get agent performance summary
+ * Falls back to configured agents if database tables don't exist
  */
 export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
   try {
@@ -248,28 +249,80 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
 
     const supabase = getSupabaseClient(c.env);
 
-    // Fetch recent executions and performance data
-    const [executionsResult, performanceResult] = await Promise.all([
-      supabase
+    // Define configured agents for GAC_FactoryOS project
+    const configuredAgents = projectId === 'GAC_FactoryOS' ? [
+      'BackendDeveloper',
+      'Coordinator',
+      'DataAnalyst',
+      'DevOpsEngineer',
+      'FinOpsGuardian',
+      'FrontendDeveloper',
+      'KnowledgeManager',
+      'ProductManager',
+      'QAEngineer',
+      'SaaSFullStackDeveloper',
+      'SecurityGuardian',
+      'SolutionArchitect',
+      'UIUXDesigner',
+    ] : [];
+
+    // Try to fetch from agent_registry first
+    let registeredAgents: string[] = [];
+    try {
+      const registryResult = await supabase
+        .from('agent_registry')
+        .select('agent_name, current_status')
+        .eq('project_id', projectId)
+        .eq('is_active', true);
+      
+      if (!registryResult.error && registryResult.data) {
+        registeredAgents = registryResult.data.map(a => a.agent_name);
+      }
+    } catch (err) {
+      console.log('agent_registry table not found, using configured agents');
+    }
+
+    // Use registered agents if available, otherwise use configured list
+    const allAgents = registeredAgents.length > 0 ? registeredAgents : configuredAgents;
+
+    // Try to fetch executions data
+    let executions: any[] = [];
+    let executionsError = null;
+    try {
+      const executionsResult = await supabase
         .from('agent_executions')
         .select('*')
         .eq('project_id', projectId)
         .order('started_at', { ascending: false })
-        .limit(100),
-      supabase
+        .limit(100);
+      
+      if (!executionsResult.error) {
+        executions = executionsResult.data || [];
+      } else {
+        executionsError = executionsResult.error.message;
+      }
+    } catch (err: any) {
+      executionsError = err.message;
+      console.log('agent_executions table not found');
+    }
+
+    // Try to fetch performance data
+    let performance: any[] = [];
+    try {
+      const performanceResult = await supabase
         .from('agent_performance')
         .select('*')
         .eq('project_id', projectId)
         .eq('period', 'day')
         .order('timestamp', { ascending: false })
-        .limit(30),
-    ]);
-
-    if (executionsResult.error) throw new Error(executionsResult.error.message);
-    if (performanceResult.error) throw new Error(performanceResult.error.message);
-
-    const executions = executionsResult.data;
-    const performance = performanceResult.data;
+        .limit(30);
+      
+      if (!performanceResult.error) {
+        performance = performanceResult.data || [];
+      }
+    } catch (err) {
+      console.log('agent_performance table not found');
+    }
 
     // Calculate quick stats from executions
     const successRate = executions.length > 0
@@ -282,8 +335,11 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
 
     const totalCost = executions.reduce((sum, e) => sum + (e.cost_usd || 0), 0);
 
-    // Get unique agents
-    const uniqueAgents = new Set(executions.map(e => e.agent_name));
+    // Get unique agents from executions
+    const executionAgents = new Set(executions.map(e => e.agent_name));
+    
+    // Combine with all configured agents
+    const totalAgents = allAgents.length;
 
     // Calculate trend from performance data (last 7 days vs previous 7 days)
     const last7Days = performance.slice(0, 7);
@@ -301,28 +357,41 @@ export async function agentSummaryHandler(c: Context<{ Bindings: Env }>) {
       ? ((last7SuccessRate - prev7SuccessRate) / prev7SuccessRate) * 100
       : 0;
 
+    // Build agent list with execution stats
+    const agentsList = allAgents.map(agentName => {
+      const agentExecutions = executions.filter(e => e.agent_name === agentName);
+      const agentSuccessRate = agentExecutions.length > 0
+        ? (agentExecutions.filter(e => e.status === 'completed' && e.success).length / agentExecutions.length) * 100
+        : 0;
+      return {
+        agent_name: agentName,
+        executions: agentExecutions.length,
+        success_rate: agentExecutions.length > 0 ? Math.round(agentSuccessRate) : null,
+        status: agentExecutions.length > 0 ? 'active' : 'idle',
+      };
+    });
+
     return c.json({
       project_id: projectId,
       summary: {
-        total_agents: uniqueAgents.size,
+        total_agents: totalAgents,
         recent_executions: executions.length,
-        success_rate: Math.round(successRate * 10) / 10,
+        success_rate: executions.length > 0 ? Math.round(successRate * 10) / 10 : null,
         success_rate_trend: Math.round(successRateTrend * 10) / 10,
-        avg_duration_ms: Math.round(avgDuration),
+        avg_duration_ms: executions.length > 0 ? Math.round(avgDuration) : null,
         total_cost_last_100: Math.round(totalCost * 1000000) / 1000000,
       },
-      agents: Array.from(uniqueAgents).map(agentName => {
-        const agentExecutions = executions.filter(e => e.agent_name === agentName);
-        const agentSuccessRate = agentExecutions.length > 0
-          ? (agentExecutions.filter(e => e.status === 'completed' && e.success).length / agentExecutions.length) * 100
-          : 0;
-        return {
-          agent_name: agentName,
-          executions: agentExecutions.length,
-          success_rate: Math.round(agentSuccessRate),
-        };
-      }),
+      agents: agentsList,
       timestamp: new Date().toISOString(),
+      _meta: {
+        data_source: registeredAgents.length > 0 ? 'agent_registry' : 'configured_list',
+        has_executions: executions.length > 0,
+        tables_available: {
+          agent_registry: registeredAgents.length > 0,
+          agent_executions: executionsError === null,
+          agent_performance: performance.length > 0,
+        },
+      },
     });
   } catch (error: any) {
     console.error('Agent summary error:', error);
